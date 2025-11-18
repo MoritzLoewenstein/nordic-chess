@@ -94,18 +94,21 @@ input:focus {
   background-color: var(--red);
 }
 
-#board-columns {
+#board-columns-top,
+#board-columns-bottom {
   display: flex;
   flex-direction: row;
   justify-content: center;
   background-color: transparent;
 }
 
-#board-columns.flipped {
+#board-columns-top.flipped,
+#board-columns-bottom.flipped {
   flex-direction: row-reverse;
 }
 
-#board-columns div {
+#board-columns-top div,
+#board-columns-bottom div {
   width: 3.75vw;
   text-align: center;
 }
@@ -116,20 +119,23 @@ input:focus {
   justify-content: center;
 }
 
-#board-rows {
+#board-rows-left,
+#board-rows-right {
   margin: calc(1em + 5px) 1em;
   background-color: transparent;
   display: flex;
   flex-direction: column;
 }
 
-#board-rows div {
+#board-rows-left div,
+#board-rows-right div {
   line-height: 3.75vw;
   vertical-align: middle;
   text-align: center;
 }
 
-#board-rows.flipped {
+#board-rows-left.flipped,
+#board-rows-right.flipped {
   flex-direction: column-reverse;
 }
 

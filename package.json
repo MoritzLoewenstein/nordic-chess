@@ -1,16 +1,19 @@
 {
-  "name": "chess_algo",
+  "name": "nordic-chess",
   "version": "1.0.0",
-  "main": "chess_algo.js",
+  "main": "index.html",
   "type": "module",
   "directories": {},
   "scripts": {
-    "bundle": "rollup _esmodules/main.js --format iife --name \"ChessBot\" --file js/bundle.js",
-    "bundle-watch": "rollup _esmodules/main.js --format iife --name \"ChessBot\" --file js/bundle.js -w"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "https://github.com/MoritzLoewenstein",
   "license": "MIT",
   "description": "",
-  "devDependencies": {}
+  "devDependencies": {
+    "vite": "^7.2.2"
+  }
 }
