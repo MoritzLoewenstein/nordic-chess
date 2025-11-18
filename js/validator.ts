@@ -1,4 +1,4 @@
-import { VARIANTS } from "./constants.js";
+import { VARIANTS } from "./constants.ts";
 
 export function isValidSquareString(field: string): boolean {
 	return !!field.match(/^[a-h][1-8]$/);

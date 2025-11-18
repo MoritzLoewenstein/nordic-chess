@@ -217,3 +217,34 @@ input:focus {
 	height: 2em;
 	transition: width 0.5s ease-in-out;
 }
+
+#engine-info {
+	text-align: center;
+	margin: 0.5em auto;
+	padding: 0.5em 1em;
+	background-color: rgba(94, 129, 172, 0.2);
+	border: 1px solid var(--accent-blue);
+	width: 30vw;
+	margin-bottom: 1em;
+	border-radius: 4px;
+}
+
+#engine-status {
+	font-size: 0.9em;
+	font-weight: bold;
+	color: var(--accent-blue);
+}
+
+.hint-from {
+	/* biome-ignore lint/complexity/noImportantStyles: override board defaults */
+	background-color: var(--accent-blue) !important;
+	/* biome-ignore lint/complexity/noImportantStyles: override board defaults */
+	border-color: var(--accent-blue) !important;
+}
+
+.hint-to {
+	/* biome-ignore lint/complexity/noImportantStyles: override board defaults */
+	background-color: var(--green) !important;
+	/* biome-ignore lint/complexity/noImportantStyles: override board defaults */
+	border-color: var(--green) !important;
+}

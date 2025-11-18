@@ -1,19 +1,32 @@
-import { ChessPosition } from "./chessgame.js";
-import { FILES_CHAR, PIECES, PieceColor, RANKS_CHAR } from "./constants.js";
+import { ChessPosition } from "./chessgame.ts";
+import { FILES_CHAR, PIECES, PieceColor, RANKS_CHAR } from "./constants.ts";
+import type { ChessEngine } from "./engine.ts";
+import { closeEngine, getEngine, isEngineReady } from "./engineManager.ts";
 import {
 	FileRank2Square,
 	oppositeColor,
 	Square2SquareStr,
 	SquareStr2Square,
-} from "./funcs.js";
+} from "./funcs.ts";
 
 type Move = [number, number];
 
 let chess: ChessPosition;
+let engine: ChessEngine | null = null;
 let playerMoves: Move[] = [];
 const playerMovesEventListeners: ((e: Event) => void)[] = [];
 
-window.addEventListener("load", () => {
+window.addEventListener("load", async () => {
+	// Initialize engine
+	try {
+		engine = await getEngine();
+		console.log("✓ Engine initialized");
+		updateEngineStatus("Ready");
+	} catch (error) {
+		console.error("✗ Failed to initialize engine:", error);
+		updateEngineStatus("Engine unavailable");
+	}
+
 	loadFen(true);
 	const setFenBtn = document.getElementById("set-fen") as HTMLElement;
 	setFenBtn.addEventListener("click", () => loadFen());
@@ -36,7 +49,24 @@ window.addEventListener("load", () => {
 		chess.color = oppositeColor(chess.color);
 	});
 
+	// Add engine hint button if available
+	const hintBtn = document.getElementById("hint");
+	if (hintBtn) {
+		hintBtn.addEventListener("click", () => getHint());
+	}
+
+	// Add analyze button if available
+	const analyzeBtn = document.getElementById("analyze");
+	if (analyzeBtn) {
+		analyzeBtn.addEventListener("click", () => analyzePosition());
+	}
+
 	cleanActiveSquareEventListeners();
+});
+
+// Cleanup on page unload
+window.addEventListener("beforeunload", async () => {
+	await closeEngine();
 });
 
 function loadFen(loadDefault: boolean = false): void {
@@ -45,7 +75,7 @@ function loadFen(loadDefault: boolean = false): void {
 	const fen = loadDefault ? "" : fenInput.value;
 	const errorDiv = document.getElementById("error") as HTMLElement;
 	errorDiv.innerText = "";
-	chess = new ChessPosition(fen);
+	chess = new ChessPosition(fen, engine || undefined);
 	if (typeof chess.error === "string") {
 		errorDiv.innerText = chess.error;
 		return;
@@ -203,4 +233,87 @@ function removeSpecialSquareClasses(): void {
 	document.querySelectorAll(".square").forEach((el) => {
 		el.classList.remove("active", "possible", "capturable");
 	});
+}
+
+/**
+ * Update engine status display
+ */
+function updateEngineStatus(status: string): void {
+	const statusEl = document.getElementById("engine-status");
+	if (statusEl) {
+		statusEl.textContent = status;
+	}
+}
+
+/**
+ * Get hint move from engine and highlight it
+ */
+async function getHint(): Promise<void> {
+	if (!engine || !isEngineReady()) {
+		alert("Engine not ready");
+		return;
+	}
+
+	updateEngineStatus("Analyzing...");
+
+	try {
+		const move = await chess.getEngineBestMove(15, 1000); // 1 second
+		if (move) {
+			showMoveHint(move);
+			updateEngineStatus("Hint ready");
+		}
+	} catch (error) {
+		console.error("Hint error:", error);
+		updateEngineStatus("Analysis failed");
+	}
+}
+
+/**
+ * Show hint by highlighting the suggested move
+ */
+function showMoveHint(moveUci: string): void {
+	if (moveUci.length < 4) return;
+
+	const fromSquare = moveUci.substring(0, 2);
+	const toSquare = moveUci.substring(2, 4);
+
+	// Highlight the hint move
+	const fromEl = document.getElementById(fromSquare) as HTMLElement;
+	const toEl = document.getElementById(toSquare) as HTMLElement;
+
+	if (fromEl && toEl) {
+		fromEl.classList.add("hint-from");
+		toEl.classList.add("hint-to");
+
+		// Clear hint after 3 seconds
+		setTimeout(() => {
+			fromEl.classList.remove("hint-from");
+			toEl.classList.remove("hint-to");
+		}, 3000);
+	}
+}
+
+/**
+ * Analyze current position and display evaluation
+ */
+async function analyzePosition(): Promise<void> {
+	if (!engine || !isEngineReady()) {
+		alert("Engine not ready");
+		return;
+	}
+
+	updateEngineStatus("Deep analysis (20 seconds)...");
+
+	try {
+		const analysis = await chess.getEngineAnalysis(20);
+		if (analysis.length > 0) {
+			const lastInfo = analysis[analysis.length - 1];
+			const score = (lastInfo.score / 100).toFixed(2);
+			const eval_ = lastInfo.score > 0 ? `+${score}` : score;
+			updateEngineStatus(`Eval: ${eval_} | Depth: ${lastInfo.depth}`);
+		}
+	} catch (error) {
+		console.error("Analysis error:", error);
+		updateEngineStatus("Analysis failed");
+	}
 }

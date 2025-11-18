@@ -40,7 +40,7 @@ const Sq120ToSq64 = [
 ] as const;
 
 function Square2FileRank(sq: number): [number, number] {
-	sq = Sq120ToSq64[sq as keyof typeof Sq120ToSq64];
+	sq = Sq120ToSq64[sq as keyof typeof Sq120ToSq64] as number;
 	if (sq === 65) throw Error(`Invalid ${sq}`);
 	return [sq % 8, Math.floor(sq / 8)];
 }

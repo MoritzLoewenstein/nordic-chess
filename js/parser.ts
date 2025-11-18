@@ -2,19 +2,20 @@ import {
 	BOARD_SIZE_SAFE,
 	CASTLEBITS,
 	COLORS,
+	type Color,
 	FILES,
 	FILES_CHAR,
 	PIECES,
 	RANKS,
 	SQUARES,
 	VARIANTS,
-} from "./constants.js";
-import { FileRank2Square, Square2FileRank, Str2Piece } from "./funcs.js";
-import { isValidFen } from "./validator.js";
+} from "./constants.ts";
+import { FileRank2Square, Square2FileRank, Str2Piece } from "./funcs.ts";
+import { isValidFen } from "./validator.ts";
 
 interface FenImportResult {
 	board: number[];
-	color: number;
+	color: Color;
 	castlingAvailability: number;
 	enPassantSquare: number;
 	halfMoveClock: number;
@@ -46,7 +47,7 @@ export function importFen(fen: string): FenImportResult | string {
 
 export function exportFen(
 	board: number[],
-	color: number,
+	color: Color,
 	castlingAvailability: number,
 	enPassant: number,
 	halfMoveClock: number,

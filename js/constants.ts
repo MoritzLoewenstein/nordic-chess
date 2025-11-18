@@ -64,25 +64,31 @@ export const RANKS = {
 	NONE: 8,
 } as const;
 
-export enum COLORS {
-	WHITE = 0,
-	BLACK = 1,
-	BOTH = 2,
-}
+export const COLORS = {
+	WHITE: 0,
+	BLACK: 1,
+	BOTH: 2,
+} as const;
 
-export enum CASTLEBITS {
-	WKCA = 1,
-	WQCA = 2,
-	BKCA = 4,
-	BQCA = 8,
-}
+export type Color = (typeof COLORS)[keyof typeof COLORS];
 
-export enum MOVES {
-	NORMAL = 0,
-	EnPassant = 1,
-	KingSideCastling = 2,
-	QueenSideCastling = 3,
-}
+export const CASTLEBITS = {
+	WKCA: 1,
+	WQCA: 2,
+	BKCA: 4,
+	BQCA: 8,
+} as const;
+
+export type CastleBit = (typeof CASTLEBITS)[keyof typeof CASTLEBITS];
+
+export const MOVES = {
+	NORMAL: 0,
+	EnPassant: 1,
+	KingSideCastling: 2,
+	QueenSideCastling: 3,
+} as const;
+
+export type Move = (typeof MOVES)[keyof typeof MOVES];
 
 // biome-ignore format: important format
 export const SQUARES = {

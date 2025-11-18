@@ -1,6 +1,7 @@
 import {
 	BishopDirections,
 	COLORS,
+	type Color,
 	FILES,
 	KingDirections,
 	KnightDirections,
@@ -15,13 +16,14 @@ import {
 	RANKS,
 	RookDirections,
 	SQUARES,
-} from "./constants.js";
-import { FileRank2Square, oppositeColor, Square2FileRank } from "./funcs.js";
-import { Castling2Fen, EnPassant2Fen, importFen } from "./parser.js";
+} from "./constants.ts";
+import type { ChessEngine } from "./engine.ts";
+import { FileRank2Square, oppositeColor, Square2FileRank } from "./funcs.ts";
+import { Castling2Fen, EnPassant2Fen, exportFen, importFen } from "./parser.ts";
 
 interface _FenImportResult {
 	board: number[];
-	color: number;
+	color: Color;
 	castlingAvailability: number;
 	enPassantSquare: number;
 	halfMoveClock: number;
@@ -33,7 +35,7 @@ type Move = [number, number];
 class ChessPosition {
 	error: string | boolean;
 	board: number[];
-	color: number;
+	color: Color;
 	castlingAvailability: number;
 	enPassantSquare: number;
 	halfMoveClock: number;
@@ -41,8 +43,9 @@ class ChessPosition {
 	piecesValue: number[];
 	piecesCount: number[];
 	pieceList: (number | undefined)[];
+	private engine: ChessEngine | null = null;
 
-	constructor(fen?: string) {
+	constructor(fen?: string, engine?: ChessEngine) {
 		if (!fen) fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 		const props = importFen(fen);
 
@@ -72,10 +75,61 @@ class ChessPosition {
 			// list of each piece
 			this.pieceList = new Array(14 * 10);
 		}
+
+		this.engine = engine || null;
+	}
+
+	setEngine(engine: ChessEngine): void {
+		this.engine = engine;
 	}
 
 	getField(_field: string): string {
 		return "";
+	}
+
+	/**
+	 * Export current position to FEN notation
+	 */
+	toFen(): string {
+		return exportFen(
+			this.board,
+			this.color,
+			this.castlingAvailability,
+			this.enPassantSquare,
+			this.halfMoveClock,
+			this.fullMoveNumber,
+		);
+	}
+
+	/**
+	 * Get engine evaluation of current position
+	 * @param depth - Search depth for analysis
+	 * @returns Score in centipawns (positive = white advantage)
+	 */
+	async getEngineEvaluation(depth: number = 15): Promise<number> {
+		if (!this.engine) return 0;
+		return this.engine.evaluatePosition(this.toFen(), depth);
+	}
+
+	/**
+	 * Get best move from engine for current position
+	 * @param depth - Search depth
+	 * @param timeMs - Time limit in milliseconds
+	 * @returns Move in UCI format (e.g., "e2e4")
+	 */
+	async getEngineBestMove(depth?: number, timeMs?: number): Promise<string> {
+		if (!this.engine) return "";
+		return this.engine.getBestMove(this.toFen(), depth, timeMs || 3000);
+	}
+
+	/**
+	 * Get detailed engine analysis for current position
+	 * @param depth - Search depth
+	 * @returns Array of analysis info at each depth level
+	 */
+	async getEngineAnalysis(depth: number = 15) {
+		if (!this.engine) return [];
+		return this.engine.evaluatePositionDetailed(this.toFen(), depth);
 	}
 
 	move(move: Move): void {
@@ -96,7 +150,7 @@ class ChessPosition {
 		return this.isCheckmate() || this.isRemis();
 	}
 
-	isCheckmate(color?: COLORS): boolean {
+	isCheckmate(color?: Color): boolean {
 		if (color === undefined) color = this.color;
 		if (color === COLORS.BOTH) throw Error("Color must be black or white");
 		// todo get king square of color

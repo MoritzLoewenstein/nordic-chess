@@ -1,18 +1,19 @@
 import {
 	COLORS,
+	type Color,
 	FILES,
 	FILES_CHAR,
 	PIECES,
 	RANKS,
 	RANKS_CHAR,
 	Sq120ToSq64,
-} from "./constants.js";
+} from "./constants.ts";
 
 //* utility functions to convert different board & piece representations *//
 
 // 120 board index to file and rank
 export function Square2FileRank(sq: number): [number, number] {
-	sq = Sq120ToSq64[sq as keyof typeof Sq120ToSq64];
+	sq = Sq120ToSq64[sq as keyof typeof Sq120ToSq64] as number;
 	if (sq === 65) throw Error(`Invalid square ${sq}`);
 	return [sq % 8, Math.floor(sq / 8)];
 }
@@ -68,7 +69,7 @@ export function Str2Piece(str: string): number {
 	}
 }
 
-export function oppositeColor(color: number): number {
+export function oppositeColor(color: Color): Color {
 	if (color === COLORS.BOTH) throw Error("No opposite color for BOTH");
-	return color === COLORS.WHITE ? COLORS.BLACK : COLORS.WHITE;
+	return (color === COLORS.WHITE ? COLORS.BLACK : COLORS.WHITE) as Color;
 }
