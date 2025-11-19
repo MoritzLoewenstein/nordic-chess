@@ -32,7 +32,6 @@ export async function getEngine(): Promise<ChessEngine> {
 			engineInstance = engine;
 			return engine;
 		} catch (error) {
-			console.error("Failed to initialize engine:", error);
 			initializationPromise = null;
 			throw error;
 		}

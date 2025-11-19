@@ -22,8 +22,7 @@ window.addEventListener("load", async () => {
 	try {
 		engine = await getEngine();
 		updateEngineStatus("Ready");
-	} catch (error) {
-		console.error("✗ Failed to initialize engine:", error);
+	} catch {
 		updateEngineStatus("Engine unavailable");
 	}
 
