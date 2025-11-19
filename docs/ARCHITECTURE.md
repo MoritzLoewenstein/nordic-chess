@@ -1,4 +1,4 @@
-# NordicChess Architecture & Technical Documentation
+# NordicChess Technical Documentation
 
 Complete technical reference for developers, architects, and maintainers.
 
@@ -55,50 +55,6 @@ Complete technical reference for developers, architects, and maintainers.
 - **Minimal Chess-Specific Code**: Use Stockfish for analysis, local code for board state
 - **Async/Await**: All engine operations are non-blocking promises
 - **Web Worker**: CPU-intensive work runs off the main thread
-- **Type Safety**: Full TypeScript for all code
-
----
-
-## File Structure
-
-### Project Layout
-
-```
-NordicChess/
-├── public/
-│   └── stockfish/              # Engine files (auto-copied)
-│
-├── js/
-│   ├── main.ts                 # Entry point & UI controller
-│   ├── chessgame.ts            # ChessPosition class (game logic)
-│   ├── parser.ts               # FEN parsing
-│   ├── validator.ts            # Move validation
-│   ├── funcs.ts                # Utility functions
-│   ├── constants.ts            # Game constants
-│   ├── engine.ts               # ChessEngine class (UCI protocol)
-│   ├── engineManager.ts        # Singleton engine manager
-│   ├── engine-test.ts          # Test suite
-│   └── test.ts                 # Other tests
-│
-├── css/
-│   └── style.css               # Styling
-│
-├── scripts/
-│   └── copy-stockfish.js       # Build helper
-│
-├── docs/
-│   └── ARCHITECTURE.md         # This file
-│
-├── index.html                  # Main HTML
-├── package.json                # Dependencies & scripts
-├── vite.config.ts              # Vite configuration
-├── tsconfig.json               # TypeScript configuration
-├── biome.json                  # Code formatter config
-│
-└── dist/                       # Build output (auto-generated)
-```
-
----
 
 ## Core Components
 
@@ -461,24 +417,7 @@ Server runs on http://localhost:5173 with:
 npm run build
 ```
 
-Process:
-
-1. Vite transpiles TypeScript to JavaScript
-2. Minifies CSS
-3. Creates optimized bundle in `dist/`
-
-**Output**:
-
-```
-dist/
-├── index.html                    (~9 KB)
-├── stockfish/                    (~7 MB)
-├── assets/
-│   ├── index-[hash].css         (~3 KB)
-│   └── index-[hash].js          (~18 KB)
-```
-
-**Total size**: ~7.5 MB (mostly engine WASM)
+Output is in dist/ and can be statically hosted.
 
 ### Deployment Requirements
 
@@ -489,33 +428,6 @@ Multi-threading requires specific CORS headers on production:
 ```
 Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
-```
-
-**Nginx Example**:
-
-```nginx
-location / {
-  add_header "Cross-Origin-Opener-Policy" "same-origin";
-  add_header "Cross-Origin-Embedder-Policy" "require-corp";
-  proxy_pass http://backend;
-}
-```
-
-**Apache Example**:
-
-```apache
-Header set Cross-Origin-Opener-Policy "same-origin"
-Header set Cross-Origin-Embedder-Policy "require-corp"
-```
-
-**Node.js Example**:
-
-```javascript
-app.use((req, res, next) => {
-  res.header("Cross-Origin-Opener-Policy", "same-origin");
-  res.header("Cross-Origin-Embedder-Policy", "require-corp");
-  next();
-});
 ```
 
 #### Vite Configuration
@@ -539,52 +451,6 @@ export default defineConfig({
 
 ## Development Guide
 
-### Adding a New Feature
-
-Example: Add a "Move Suggest" button that shows top 3 moves
-
-1. **Add UI element** (`index.html`):
-
-```html
-<button type="button" id="suggest-moves">Suggest Moves</button>
-```
-
-2. **Add handler** (`js/main.ts`):
-
-```typescript
-async function suggestMoves(): Promise<void> {
-  const analysis = await chess.getEngineAnalysis(18);
-  const topMoves = analysis.slice(0, 3);
-
-  topMoves.forEach((info, i) => {
-    const move = info.pv[0];
-    const score = (info.score / 100).toFixed(2);
-    console.log(`${i + 1}. ${move}: ${score}`);
-  });
-}
-
-// Attach handler
-document
-  .getElementById("suggest-moves")
-  ?.addEventListener("click", suggestMoves);
-```
-
-3. **Add styling** (`css/style.css`):
-
-```css
-#suggest-moves {
-  /* styling */
-}
-```
-
-### Code Style
-
-- **TypeScript**: Prefer strict types, avoid `any`
-- **Naming**: `camelCase` for functions/variables, `PascalCase` for classes
-- **Async**: Use `async/await`, not `.then()`
-- **Errors**: Use try/catch blocks, provide user-friendly messages
-- **Comments**: Explain "why", not "what" (code explains itself)
-
 ### Testing
 
 Run tests from browser console:
@@ -602,15 +468,6 @@ Tests cover:
 - FEN export/import
 - Configuration options
 
-### TypeScript Configuration
-
-Current setup (`tsconfig.json`):
-
-- Target: ES2020
-- Module: ESNext
-- Strict mode enabled
-- Source maps for debugging
-
 ### Linting & Formatting
 
 ```bash
@@ -619,69 +476,9 @@ npm run biome:write    # Auto-format
 npm run biome:ci       # CI check
 ```
 
----
-
-## Performance
-
-### Engine Load Time
-
-```
-First Load: 500-1000ms (engine WASM downloads and initializes)
-Subsequent: 0ms (cached)
-```
-
-### Analysis Speed
-
-| Depth | Time     | Use Case           |
-| ----- | -------- | ------------------ |
-| 10    | 0.2-0.5s | Instant feedback   |
-| 12    | 0.5-2s   | Quick hints        |
-| 15    | 1-3s     | Default hint       |
-| 18    | 3-8s     | Deep analysis      |
-| 20+   | 10-30s   | Very deep analysis |
-
-**Factors affecting speed**:
-
-- CPU cores (more = faster)
-- Hash size (more memory can improve speed)
-- Position complexity
-
-### Memory Usage
-
-```
-Engine instance:     ~50-100 MB (WASM + overhead)
-Hash table:          ~128 MB (default, configurable)
-Board state:         <1 MB
-Total typical:       ~200 MB
-```
-
-**Mobile optimization**:
-
-- Use lite engine (already configured)
-- Reduce hash: `engine.setHashSize(64)`
-- Reduce threads: `engine.setThreads(2)`
-
-### Threading
-
-```
-Default: Uses all CPU cores
-Scaling: ~40-60% faster per additional thread
-Example on 8-core CPU: 7-8x faster than single-threaded
-```
-
-### Optimization Tips
-
-1. **Shallow analysis for quick feedback**: Use depth 10-12
-2. **Deep analysis for puzzles**: Use depth 20-25
-3. **Cache positions**: Run same position multiple times without reload
-4. **Batch analysis**: Analyze multiple positions in parallel
-5. **Reduce memory**: Lower hash size on memory-constrained devices
-
----
-
 ## Known Limitations
 
-### Completed Features ✓
+### Completed Features
 
 1. **Castling (kingside & queenside)**
 
@@ -720,25 +517,19 @@ Example on 8-core CPU: 7-8x faster than single-threaded
 
 ### Implementation Limitations
 
-1. **Auto-detection depends on directory listing**
-
-   - Works in dev and most servers
-   - Can fail if server disables directory listing
-   - Workaround: Provide manual path to `getEngine('/path/to/engine')`
-
-2. **CORS requirements**
+1. **CORS requirements**
 
    - Multi-threading requires specific headers
    - Single-threaded fallback not implemented
    - Production deployment must configure headers
 
-3. **Memory on constrained devices**
+2. **Memory on constrained devices**
 
    - Hash size (128 MB default) may be too large
    - Mobile phones may have <512 MB available
    - Solution: `engine.setHashSize(32)` or less
 
-4. **Worker support required**
+3. **Worker support required**
    - Won't work on very old browsers
    - All modern browsers support Web Workers
 
@@ -747,13 +538,10 @@ Example on 8-core CPU: 7-8x faster than single-threaded
 - [ ] Pawn promotion move generation (UI selection)
 - [ ] Move legality checking (king left in check)
 - [ ] Stalemate & threefold repetition detection
-- [ ] Opening book integration
 - [ ] Engine strength handicap levels
 - [ ] PGN import with annotations
 - [ ] Move tree visualization
 - [ ] Evaluation graph during game
-- [ ] Engine vs Engine matches
-- [ ] Cloud-based deep analysis
 - [ ] Endgame tablebase support
 - [ ] Disable buttons while analyzing
 - [ ] Save analysis to game
@@ -771,36 +559,6 @@ Run from browser console:
 ```javascript
 await testEngine();
 ```
-
-### Manual Testing Checklist
-
-- [ ] Page loads without errors
-- [ ] Engine status shows "Initializing..." then "Ready"
-- [ ] Hint button highlights a valid move
-- [ ] Analyze button updates status with evaluation
-- [ ] Can play moves with mouse clicks
-- [ ] Flip board works correctly
-- [ ] FEN import/export works
-- [ ] Engine unloads cleanly on page unload
-
-### Browser Testing
-
-- Chrome/Edge 90+
-- Firefox 88+
-- Safari 15+
-
-### Performance Testing
-
-```bash
-npm run build
-npm run preview
-# Open in DevTools Network tab to check:
-# - Engine file download time
-# - Engine file size
-# - Analysis timing
-```
-
----
 
 ## Troubleshooting
 
@@ -858,58 +616,4 @@ npm run preview
 - [Stockfish GitHub](https://github.com/official-stockfish/Stockfish)
 - [Stockfish.js](https://github.com/nmrugg/stockfish.js)
 - [UCI Protocol](https://www.wbec-ridderkerk.nl/html/UCIProtocol.html)
-- [MDN Web Workers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
 - [FEN Notation](https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation)
-
-### Chess Resources
-
-- [Chess.com Learn](https://www.chess.com/learn)
-- [Lichess Guides](https://lichess.org/learn)
-- [Chess Rules](https://www.fide.com/handbook)
-
-### TypeScript & Web
-
-- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
-- [MDN JavaScript Reference](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference)
-- [Vite Documentation](https://vitejs.dev/)
-
----
-
-## Contributing
-
-### Getting Started
-
-1. Fork the repository
-2. Clone locally: `git clone [url]`
-3. Install: `npm install`
-4. Run dev: `npm run dev`
-5. Read this file to understand architecture
-6. Make changes
-7. Test: `npm run biome:check` and `await testEngine()`
-8. Submit PR
-
-### Code Review Checklist
-
-- [ ] Follows TypeScript best practices
-- [ ] No `any` types
-- [ ] Functions are well-documented
-- [ ] Error handling is in place
-- [ ] Code is formatted (`biome:write`)
-- [ ] Tests pass
-- [ ] No console errors
-- [ ] Works in multiple browsers
-
----
-
-## Summary
-
-NordicChess is a well-architected chess application with:
-
-- **Clean layered architecture**: UI → Game logic → Engine abstraction → WASM
-- **Type-safe**: Full TypeScript with strict mode
-- **Non-blocking**: Web Worker keeps UI responsive
-- **Extensible**: Easy to add features
-- **Well-tested**: Comprehensive test suite
-- **Production-ready**: Deployed with proper CORS configuration
-
-For questions or issues, check the troubleshooting section or review the relevant code files.
