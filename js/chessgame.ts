@@ -328,6 +328,105 @@ class ChessPosition {
 					PieceColor[this.board[sq + dir]] === oppositeColor(colorOfPiece),
 			).map((dir) => [sq, sq + dir]);
 		}
+
+		//* Bishops *//
+		if (PieceBishopQueen[piece] && !PieceRookQueen[piece]) {
+			const squares: Move[] = [];
+			for (let i = 0; i < 4; i++) {
+				const dir = BishopDirections[i];
+				let t_sq = sq + dir;
+				let t_piece = this.board[t_sq];
+				while (t_piece !== SQUARES.OFFBOARD) {
+					if (t_piece === PIECES.EMPTY) {
+						squares.push([sq, t_sq]);
+					} else if (PieceColor[t_piece] === oppositeColor(colorOfPiece)) {
+						squares.push([sq, t_sq]);
+						break;
+					} else {
+						break;
+					}
+					t_sq += dir;
+					t_piece = this.board[t_sq];
+				}
+			}
+			return squares;
+		}
+
+		//* Rooks *//
+		if (PieceRookQueen[piece] && !PieceBishopQueen[piece]) {
+			const squares: Move[] = [];
+			for (let i = 0; i < 4; i++) {
+				const dir = RookDirections[i];
+				let t_sq = sq + dir;
+				let t_piece = this.board[t_sq];
+				while (t_piece !== SQUARES.OFFBOARD) {
+					if (t_piece === PIECES.EMPTY) {
+						squares.push([sq, t_sq]);
+					} else if (PieceColor[t_piece] === oppositeColor(colorOfPiece)) {
+						squares.push([sq, t_sq]);
+						break;
+					} else {
+						break;
+					}
+					t_sq += dir;
+					t_piece = this.board[t_sq];
+				}
+			}
+			return squares;
+		}
+
+		//* Queens *//
+		if (PieceRookQueen[piece] && PieceBishopQueen[piece]) {
+			const squares: Move[] = [];
+			// Rook directions
+			for (let i = 0; i < 4; i++) {
+				const dir = RookDirections[i];
+				let t_sq = sq + dir;
+				let t_piece = this.board[t_sq];
+				while (t_piece !== SQUARES.OFFBOARD) {
+					if (t_piece === PIECES.EMPTY) {
+						squares.push([sq, t_sq]);
+					} else if (PieceColor[t_piece] === oppositeColor(colorOfPiece)) {
+						squares.push([sq, t_sq]);
+						break;
+					} else {
+						break;
+					}
+					t_sq += dir;
+					t_piece = this.board[t_sq];
+				}
+			}
+			// Bishop directions
+			for (let i = 0; i < 4; i++) {
+				const dir = BishopDirections[i];
+				let t_sq = sq + dir;
+				let t_piece = this.board[t_sq];
+				while (t_piece !== SQUARES.OFFBOARD) {
+					if (t_piece === PIECES.EMPTY) {
+						squares.push([sq, t_sq]);
+					} else if (PieceColor[t_piece] === oppositeColor(colorOfPiece)) {
+						squares.push([sq, t_sq]);
+						break;
+					} else {
+						break;
+					}
+					t_sq += dir;
+					t_piece = this.board[t_sq];
+				}
+			}
+			return squares;
+		}
+
+		//* Kings *//
+		if (PieceKing[piece]) {
+			return KingDirections.filter(
+				(dir) =>
+					this.board[sq + dir] !== SQUARES.OFFBOARD &&
+					(this.board[sq + dir] === PIECES.EMPTY ||
+						PieceColor[this.board[sq + dir]] === oppositeColor(colorOfPiece)),
+			).map((dir) => [sq, sq + dir]);
+		}
+
 		return [];
 	}
 

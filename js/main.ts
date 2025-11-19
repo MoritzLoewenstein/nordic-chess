@@ -77,6 +77,7 @@ function loadFen(loadDefault: boolean = false): void {
 	}
 	removeAllPieces();
 	removeSpecialSquareClasses();
+	updateTurnIndicator();
 	fenInput.value = "";
 	const piecesStr = [
 		"",
@@ -137,9 +138,20 @@ function flipBoard(): void {
 		});
 }
 
-function _setProbabilities(whiteToWin: number): void {
+/**
+ * Update evaluation bar based on engine score (centipawns)
+ * Positive = white better, Negative = black better
+ */
+function setProbabilities(score: number): void {
+	const whiteToWin = score / 100;
+	const normalizedScore = 1 / (1 + Math.exp(-score / 150));
 	const el = document.getElementById("prob-white") as HTMLElement;
-	el.style.width = `${whiteToWin * 30}vw`;
+	el.style.width = `${normalizedScore * 30}vw`;
+	// Update evaluation text
+	const evalText = document.getElementById("eval-text");
+	const evalScore = whiteToWin.toFixed(2);
+	const evalStr = score > 0 ? `+${evalScore}` : evalScore;
+	evalText.textContent = `Eval: ${evalStr}`;
 }
 
 function _getRandomInt(max: number): number {
@@ -154,6 +166,7 @@ function playMove(index: number): void {
 	const el = document.getElementById(Square2SquareStr(move[1])) as HTMLElement;
 	el.addEventListener("click", setSquareActive);
 	movePiece(Square2SquareStr(move[0]), Square2SquareStr(move[1]));
+	updateTurnIndicator();
 	cleanActiveSquareEventListeners();
 }
 
@@ -241,6 +254,26 @@ function updateEngineStatus(status: string): void {
 }
 
 /**
+ * Update turn indicator to show whose side to move
+ */
+function updateTurnIndicator(): void {
+	const indicator = document.getElementById("turn-indicator");
+	if (indicator) {
+		if (chess.color === 0) {
+			// White to move
+			indicator.textContent = "White to move";
+			indicator.classList.remove("black-turn");
+			indicator.classList.add("white-turn");
+		} else {
+			// Black to move
+			indicator.textContent = "Black to move";
+			indicator.classList.remove("white-turn");
+			indicator.classList.add("black-turn");
+		}
+	}
+}
+
+/**
  * Get hint move from engine and highlight it
  */
 async function getHint(): Promise<void> {
@@ -306,6 +339,7 @@ async function analyzePosition(): Promise<void> {
 			const score = (lastInfo.score / 100).toFixed(2);
 			const eval_ = lastInfo.score > 0 ? `+${score}` : score;
 			updateEngineStatus(`Eval: ${eval_} | Depth: ${lastInfo.depth}`);
+			setProbabilities(lastInfo.score);
 		}
 	} catch (error) {
 		console.error("Analysis error:", error);

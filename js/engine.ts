@@ -81,7 +81,9 @@ export class ChessEngine {
 			if (handler) handler(message);
 		} else if (message.startsWith("info")) {
 			const handler = this.responseHandlers.get("info");
-			if (handler) handler(message);
+			if (handler) {
+				handler(message);
+			}
 		}
 	}
 
@@ -111,6 +113,7 @@ export class ChessEngine {
 	 */
 	private parseInfoResponse(response: string): EngineInfo | null {
 		const depthMatch = response.match(/depth\s+(\d+)/);
+		// Score is optional - some info lines don't have it (e.g., "currmove" only lines)
 		const scoreMatch =
 			response.match(/score\s+cp\s+(-?\d+)/) ||
 			response.match(/score\s+mate\s+(-?\d+)/);
@@ -119,18 +122,21 @@ export class ChessEngine {
 		const timeMatch = response.match(/time\s+(\d+)/);
 		const pvMatch = response.match(/pv\s+(.*?)(?:\s+[a-z]+|$)/);
 
-		if (!depthMatch || !scoreMatch) return null;
+		if (!depthMatch) return null;
 
 		const depth = parseInt(depthMatch[1], 10);
 		let score = 0;
 		let isMate = false;
 
-		if (response.includes("mate")) {
-			isMate = true;
-			const mateIn = parseInt(scoreMatch[1], 10);
-			score = mateIn > 0 ? 100000 - mateIn : -100000 - mateIn;
-		} else {
-			score = parseInt(scoreMatch[1], 10);
+		// Only parse score if present (some info lines may not have score yet)
+		if (scoreMatch) {
+			if (response.includes("mate")) {
+				isMate = true;
+				const mateIn = parseInt(scoreMatch[1], 10);
+				score = mateIn > 0 ? 100000 - mateIn : -100000 - mateIn;
+			} else {
+				score = parseInt(scoreMatch[1], 10);
+			}
 		}
 
 		return {

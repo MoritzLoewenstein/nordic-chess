@@ -208,43 +208,98 @@ input:focus {
 	width: 30vw;
 	border: 5px solid var(--accent-blue);
 	margin: 1em auto;
-	height: 2em;
+	height: 3em;
+	position: relative;
+	display: flex;
+	align-items: center;
+	overflow: hidden;
+}
+
+#eval-text {
+	position: absolute;
+	left: 50%;
+	transform: translateX(-50%);
+	font-weight: bold;
+	font-size: 0.9em;
+	color: var(--light);
+	text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+	z-index: 10;
 }
 
 #prob-white {
 	background-color: var(--chess-light);
-	width: 15vw;
-	height: 2em;
-	transition: width 0.5s ease-in-out;
+	width: 50%;
+	height: 100%;
+	transition: width 0.3s ease-in-out;
 }
 
 #engine-info {
 	text-align: center;
 	margin: 0.5em auto;
 	padding: 0.5em 1em;
-	background-color: rgba(94, 129, 172, 0.2);
-	border: 1px solid var(--accent-blue);
+	background-color: var(--chess-dark);
+	border: 2px solid var(--accent-blue);
 	width: 30vw;
 	margin-bottom: 1em;
-	border-radius: 4px;
 }
 
 #engine-status {
 	font-size: 0.9em;
 	font-weight: bold;
 	color: var(--accent-blue);
+	display: block;
+	margin-bottom: 0.5em;
+}
+
+#turn-indicator {
+	font-size: 1em;
+	font-weight: bold;
+	padding: 0.3em 0.6em;
+	display: inline-block;
+	transition:
+		background-color 0.3s ease,
+		color 0.3s ease;
+}
+
+#turn-indicator.white-turn {
+	background-color: var(--chess-light);
+	color: var(--dark);
+}
+
+#turn-indicator.black-turn {
+	background-color: var(--chess-dark);
+	color: var(--light);
 }
 
 .hint-from {
 	/* biome-ignore lint/complexity/noImportantStyles: override board defaults */
 	background-color: var(--accent-blue) !important;
 	/* biome-ignore lint/complexity/noImportantStyles: override board defaults */
-	border-color: var(--accent-blue) !important;
+	border-color: var(--border) !important;
+	animation: hint-pulse 1s ease-in-out infinite;
+	box-shadow: 0 0 15px rgba(94, 129, 172, 0.8) !important;
 }
 
 .hint-to {
 	/* biome-ignore lint/complexity/noImportantStyles: override board defaults */
 	background-color: var(--green) !important;
 	/* biome-ignore lint/complexity/noImportantStyles: override board defaults */
-	border-color: var(--green) !important;
+	border-color: var(--border) !important;
+	animation: hint-pulse 1s ease-in-out infinite;
+	box-shadow: 0 0 15px rgba(163, 190, 140, 0.8) !important;
+}
+
+@keyframes hint-pulse {
+	0% {
+		opacity: 1;
+		filter: brightness(1);
+	}
+	50% {
+		opacity: 0.9;
+		filter: brightness(1.15);
+	}
+	100% {
+		opacity: 1;
+		filter: brightness(1);
+	}
 }

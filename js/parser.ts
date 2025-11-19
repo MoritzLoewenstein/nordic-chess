@@ -6,6 +6,7 @@ import {
 	FILES,
 	FILES_CHAR,
 	PIECES,
+	PIECES_CHAR,
 	RANKS,
 	SQUARES,
 	VARIANTS,
@@ -138,12 +139,39 @@ function Fen2Board(pieces: string): number[] {
 }
 
 function Board2Fen(board: number[]): string {
-	// todo parse (64 or 120) board to fen
-	return board
-		.map((_rank) => {
-			//const empty = 0;
-			//const str = "";
-			return "";
-		})
-		.join("/");
+	// Convert 120-square board representation to FEN board string
+	// The board uses 0x88 representation with border squares marked as OFFBOARD
+	// Ranks go from 8 to 1 (reverse order in the loop)
+	const ranks: string[] = [];
+
+	for (let rank = RANKS._8; rank >= RANKS._1; rank--) {
+		let rankStr = "";
+		let emptyCount = 0;
+
+		for (let file = FILES.A_; file <= FILES.H_; file++) {
+			const square = FileRank2Square(file, rank);
+			const piece = board[square];
+
+			if (piece === PIECES.EMPTY) {
+				emptyCount++;
+			} else {
+				// Add empty square count if any
+				if (emptyCount > 0) {
+					rankStr += emptyCount.toString();
+					emptyCount = 0;
+				}
+				// Add piece character
+				rankStr += PIECES_CHAR[piece];
+			}
+		}
+
+		// Add remaining empty squares at end of rank
+		if (emptyCount > 0) {
+			rankStr += emptyCount.toString();
+		}
+
+		ranks.push(rankStr);
+	}
+
+	return ranks.join("/");
 }
