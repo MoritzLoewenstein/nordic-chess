@@ -5,6 +5,7 @@ import { closeEngine, getEngine, isEngineReady } from "./engineManager.ts";
 import {
 	FileRank2Square,
 	oppositeColor,
+	Square2FileRank,
 	Square2SquareStr,
 	SquareStr2Square,
 } from "./funcs.ts";
@@ -119,6 +120,32 @@ function movePiece(squareSrc: string, squareDst: string): void {
 	srcEl.style.backgroundImage = "none";
 }
 
+/**
+ * Handle castling: move rook in addition to king
+ */
+function handleCastling(move: [number, number], color: number): void {
+	const srcFile = Square2FileRank(move[0])[0];
+	const dstFile = Square2FileRank(move[1])[0];
+
+	// Check if this is a castling move (king moving 2 files)
+	if (Math.abs(dstFile - srcFile) !== 2) return;
+
+	let rookSrcSquare: string;
+	let rookDstSquare: string;
+
+	if (dstFile > srcFile) {
+		// Kingside castling: rook from h-file to f-file
+		rookSrcSquare = color === 0 ? "h1" : "h8";
+		rookDstSquare = color === 0 ? "f1" : "f8";
+	} else {
+		// Queenside castling: rook from a-file to d-file
+		rookSrcSquare = color === 0 ? "a1" : "a8";
+		rookDstSquare = color === 0 ? "d1" : "d8";
+	}
+
+	movePiece(rookSrcSquare, rookDstSquare);
+}
+
 function removeAllPieces(): void {
 	for (let rank = 0; rank < 8; rank++) {
 		for (let file = 0; file < 8; file++) {
@@ -162,10 +189,13 @@ function playMove(index: number): void {
 	removeSpecialSquareClasses();
 	removeAllMoveEventListeners();
 	const move = playerMoves[index];
+	const colorBeforeMove = chess.color;
 	chess.move(move);
 	const el = document.getElementById(Square2SquareStr(move[1])) as HTMLElement;
 	el.addEventListener("click", setSquareActive);
 	movePiece(Square2SquareStr(move[0]), Square2SquareStr(move[1]));
+	// Handle castling rook movement
+	handleCastling(move, colorBeforeMove);
 	updateTurnIndicator();
 	cleanActiveSquareEventListeners();
 }

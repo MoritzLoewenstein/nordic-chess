@@ -66,7 +66,7 @@ Complete technical reference for developers, architects, and maintainers.
 ```
 NordicChess/
 ├── public/
-│   └── (static assets)
+│   └── stockfish/              # Engine files (auto-copied)
 │
 ├── js/
 │   ├── main.ts                 # Entry point & UI controller
@@ -96,9 +96,6 @@ NordicChess/
 ├── biome.json                  # Code formatter config
 │
 └── dist/                       # Build output (auto-generated)
-    ├── index.html
-    ├── assets/
-    └── stockfish/              # Engine files (auto-copied)
 ```
 
 ---
@@ -122,8 +119,8 @@ class ChessPosition {
 
   // Methods
   toFen(): string;
-  move(moveStr: string): Piece | null;
-  getAvailableMoves(): string[];
+  move(move: [number, number]): void;
+  getPossibleSquares(sq: number): [number, number][];
 
   // Engine methods
   setEngine(engine: ChessEngine): void;
@@ -468,23 +465,20 @@ Process:
 
 1. Vite transpiles TypeScript to JavaScript
 2. Minifies CSS
-3. Copies engine files to `dist/stockfish/`
-4. Creates optimized bundle in `dist/`
+3. Creates optimized bundle in `dist/`
 
 **Output**:
 
 ```
 dist/
 ├── index.html                    (~9 KB)
+├── stockfish/                    (~7 MB)
 ├── assets/
 │   ├── index-[hash].css         (~3 KB)
 │   └── index-[hash].js          (~18 KB)
-└── stockfish/
-    ├── stockfish-17.1-lite-[hash].js   (~32 KB)
-    └── stockfish-17.1-lite-[hash].wasm (~6.8 MB)
 ```
 
-**Total size**: ~33 MB (mostly engine WASM)
+**Total size**: ~7.5 MB (mostly engine WASM)
 
 ### Deployment Requirements
 
@@ -687,24 +681,40 @@ Example on 8-core CPU: 7-8x faster than single-threaded
 
 ## Known Limitations
 
+### Completed Features ✓
+
+1. **Castling (kingside & queenside)**
+
+   - Full legal move generation with validation
+   - Checks: king not in check, doesn't pass through check, doesn't end in check
+   - Rook movement handled automatically
+   - Castling rights update on king/rook movement
+
+2. **En Passant**
+
+   - Full legal move generation
+   - Automatic opponent pawn capture
+   - Correct halfMoveClock handling
+
+3. **Move State Management**
+   - FEN-compatible halfMoveClock updates
+   - fullMoveNumber incrementing
+   - Castling availability tracking
+   - En passant square updates
+
 ### Engine Limitations
 
-1. **No direct legal move generation**
-
-   - UCI doesn't expose legal moves directly
-   - Use existing `getAvailableMoves()` instead
-
-2. **No opening book** (yet)
+1. **No opening book** (yet)
 
    - Could be added as future enhancement
    - Stockfish includes basic opening knowledge
 
-3. **No endgame tablebases**
+2. **No endgame tablebases**
 
    - Would require additional ~1 GB download
    - Lite engine handles most endgames well
 
-4. **No multi-PV analysis**
+3. **No multi-PV analysis**
    - Can't directly get top 5 moves
    - Can infer from analysis output
 
@@ -734,6 +744,9 @@ Example on 8-core CPU: 7-8x faster than single-threaded
 
 ### Potential Future Improvements
 
+- [ ] Pawn promotion move generation (UI selection)
+- [ ] Move legality checking (king left in check)
+- [ ] Stalemate & threefold repetition detection
 - [ ] Opening book integration
 - [ ] Engine strength handicap levels
 - [ ] PGN import with annotations

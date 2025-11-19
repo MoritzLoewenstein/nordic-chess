@@ -1,10 +1,12 @@
 import {
 	BishopDirections,
+	CASTLEBITS,
 	COLORS,
 	type Color,
 	FILES,
 	KingDirections,
 	KnightDirections,
+	MOVES,
 	PIECES,
 	PIECES_CHAR,
 	PieceBishopQueen,
@@ -137,13 +139,152 @@ class ChessPosition {
 		if (this.board[move[0]] === PIECES.EMPTY)
 			throw Error(`No piece on Square ${move[0]}`);
 
-		// todo check for move type / special moves
 		const piece = this.board[move[0]];
+		const destination = this.board[move[1]];
+		const moveType = this.getMoveType(move);
+
+		// Handle en passant capture
+		if (moveType === MOVES.EnPassant) {
+			const capturedPawnSq =
+				this.color === COLORS.WHITE
+					? move[1] - 10 // captured pawn is one rank below
+					: move[1] + 10; // captured pawn is one rank above
+			this.board[capturedPawnSq] = PIECES.EMPTY;
+		}
+
+		// Handle castling - move rook
+		if (moveType === MOVES.KingSideCastling) {
+			const rookSrc =
+				this.color === COLORS.WHITE
+					? FileRank2Square(FILES.H_, RANKS._1) // h1
+					: FileRank2Square(FILES.H_, RANKS._8); // h8
+			const rookDst =
+				this.color === COLORS.WHITE
+					? FileRank2Square(FILES.F_, RANKS._1) // f1
+					: FileRank2Square(FILES.F_, RANKS._8); // f8
+			this.board[rookDst] = this.board[rookSrc];
+			this.board[rookSrc] = PIECES.EMPTY;
+		} else if (moveType === MOVES.QueenSideCastling) {
+			const rookSrc =
+				this.color === COLORS.WHITE
+					? FileRank2Square(FILES.A_, RANKS._1) // a1
+					: FileRank2Square(FILES.A_, RANKS._8); // a8
+			const rookDst =
+				this.color === COLORS.WHITE
+					? FileRank2Square(FILES.D_, RANKS._1) // d1
+					: FileRank2Square(FILES.D_, RANKS._8); // d8
+			this.board[rookDst] = this.board[rookSrc];
+			this.board[rookSrc] = PIECES.EMPTY;
+		}
+
+		// Move the piece
 		this.board[move[0]] = PIECES.EMPTY;
 		this.board[move[1]] = piece;
 
+		// Update castling availability
+		if (PieceKing[piece]) {
+			// King moved - lose both castling rights
+			if (this.color === COLORS.WHITE) {
+				this.castlingAvailability &= ~CASTLEBITS.WKCA;
+				this.castlingAvailability &= ~CASTLEBITS.WQCA;
+			} else {
+				this.castlingAvailability &= ~CASTLEBITS.BKCA;
+				this.castlingAvailability &= ~CASTLEBITS.BQCA;
+			}
+		} else if (PieceRookQueen[piece] && !PieceBishopQueen[piece]) {
+			// Rook moved - lose castling right on that side
+			const srcFile = Square2FileRank(move[0])[0];
+			if (this.color === COLORS.WHITE) {
+				if (srcFile === FILES.H_) this.castlingAvailability &= ~CASTLEBITS.WKCA;
+				else if (srcFile === FILES.A_)
+					this.castlingAvailability &= ~CASTLEBITS.WQCA;
+			} else {
+				if (srcFile === FILES.H_) this.castlingAvailability &= ~CASTLEBITS.BKCA;
+				else if (srcFile === FILES.A_)
+					this.castlingAvailability &= ~CASTLEBITS.BQCA;
+			}
+		}
+
+		// Opponent's castling rights lost if rook captured
+		if (destination !== PIECES.EMPTY && PieceRookQueen[destination]) {
+			const capturedFile = Square2FileRank(move[1])[0];
+			const capturedColor = PieceColor[destination];
+			if (capturedColor === COLORS.WHITE) {
+				if (capturedFile === FILES.H_)
+					this.castlingAvailability &= ~CASTLEBITS.WKCA;
+				else if (capturedFile === FILES.A_)
+					this.castlingAvailability &= ~CASTLEBITS.WQCA;
+			} else {
+				if (capturedFile === FILES.H_)
+					this.castlingAvailability &= ~CASTLEBITS.BKCA;
+				else if (capturedFile === FILES.A_)
+					this.castlingAvailability &= ~CASTLEBITS.BQCA;
+			}
+		}
+
+		// Update en passant square
+		let newEnPassantSq = 0;
+		if (PiecePawn[piece]) {
+			const srcRank = Square2FileRank(move[0])[1];
+			const dstRank = Square2FileRank(move[1])[1];
+			const dstFile = Square2FileRank(move[1])[0];
+			// Check if pawn moved 2 squares
+			if (Math.abs(dstRank - srcRank) === 2) {
+				// En passant square is between source and destination
+				const epRank = (srcRank + dstRank) / 2;
+				newEnPassantSq = FileRank2Square(dstFile, epRank);
+			}
+		}
+		this.enPassantSquare = newEnPassantSq;
+
+		// Reset halfMoveClock on pawn move or capture
+		if (PiecePawn[piece] || destination !== PIECES.EMPTY) {
+			this.halfMoveClock = 0;
+		} else {
+			this.halfMoveClock++;
+		}
+
+		// Increment fullMoveNumber after black moves
+		if (this.color === COLORS.BLACK) {
+			this.fullMoveNumber++;
+		}
+
 		// switch side to play
 		this.color = oppositeColor(this.color);
+	}
+
+	/**
+	 * Determine move type (normal, en passant, or castling)
+	 */
+	private getMoveType(move: Move): number {
+		const piece = this.board[move[0]];
+
+		if (PieceKing[piece]) {
+			const srcFile = Square2FileRank(move[0])[0];
+			const dstFile = Square2FileRank(move[1])[0];
+			// Kingside castling: king moves 2 squares to the right
+			if (Math.abs(dstFile - srcFile) === 2) {
+				if (dstFile > srcFile) {
+					return MOVES.KingSideCastling;
+				} else {
+					return MOVES.QueenSideCastling;
+				}
+			}
+		}
+
+		if (PiecePawn[piece]) {
+			// En passant: pawn capture but destination is empty
+			if (this.board[move[1]] === PIECES.EMPTY) {
+				const dstFile = Square2FileRank(move[1])[0];
+				const srcFile = Square2FileRank(move[0])[0];
+				// Diagonal move to empty square = en passant
+				if (dstFile !== srcFile) {
+					return MOVES.EnPassant;
+				}
+			}
+		}
+
+		return MOVES.NORMAL;
 	}
 
 	isGameOver(): boolean {
@@ -313,10 +454,39 @@ class ChessPosition {
 					) {
 						//move.push();
 					}
-					// todo en passant
 					squares.push(move);
 				}
 			});
+
+			// En passant captures
+			if (this.enPassantSquare !== 0) {
+				const epFile = Square2FileRank(this.enPassantSquare)[0];
+				const pawnFile = Square2FileRank(sq)[0];
+				const pawnRank = Square2FileRank(sq)[1];
+
+				// Pawn must be on correct rank and adjacent file
+				const correctRank =
+					(colorOfPiece === COLORS.WHITE && pawnRank === RANKS._5) ||
+					(colorOfPiece === COLORS.BLACK && pawnRank === RANKS._4);
+				const adjacentFile = Math.abs(epFile - pawnFile) === 1;
+
+				if (correctRank && adjacentFile) {
+					// Can capture en passant
+					const captureSquare =
+						colorOfPiece === COLORS.WHITE
+							? this.enPassantSquare + 10 // pawn we're capturing is one rank behind
+							: this.enPassantSquare - 10; // pawn we're capturing is one rank ahead
+					if (
+						this.board[captureSquare] !== PIECES.EMPTY &&
+						PiecePawn[this.board[captureSquare]] &&
+						PieceColor[this.board[captureSquare]] ===
+							oppositeColor(colorOfPiece)
+					) {
+						squares.push([sq, this.enPassantSquare]);
+					}
+				}
+			}
+
 			return squares;
 		}
 
@@ -419,12 +589,99 @@ class ChessPosition {
 
 		//* Kings *//
 		if (PieceKing[piece]) {
-			return KingDirections.filter(
+			const squares: Move[] = KingDirections.filter(
 				(dir) =>
 					this.board[sq + dir] !== SQUARES.OFFBOARD &&
 					(this.board[sq + dir] === PIECES.EMPTY ||
 						PieceColor[this.board[sq + dir]] === oppositeColor(colorOfPiece)),
 			).map((dir) => [sq, sq + dir]);
+
+			// Castling moves
+			if (colorOfPiece === COLORS.WHITE) {
+				// Kingside castling (O-O)
+				if (
+					this.castlingAvailability & CASTLEBITS.WKCA &&
+					this.board[FileRank2Square(FILES.F_, RANKS._1)] === PIECES.EMPTY &&
+					this.board[FileRank2Square(FILES.G_, RANKS._1)] === PIECES.EMPTY &&
+					this.board[FileRank2Square(FILES.H_, RANKS._1)] ===
+						PIECES.whiteRook &&
+					!this.isSquareAttacked(sq, COLORS.BLACK) && // King not in check
+					!this.isSquareAttacked(
+						FileRank2Square(FILES.F_, RANKS._1),
+						COLORS.BLACK,
+					) && // King doesn't pass through attacked square
+					!this.isSquareAttacked(
+						FileRank2Square(FILES.G_, RANKS._1),
+						COLORS.BLACK,
+					) // King doesn't end in check
+				) {
+					squares.push([sq, FileRank2Square(FILES.G_, RANKS._1)]);
+				}
+
+				// Queenside castling (O-O-O)
+				if (
+					this.castlingAvailability & CASTLEBITS.WQCA &&
+					this.board[FileRank2Square(FILES.B_, RANKS._1)] === PIECES.EMPTY &&
+					this.board[FileRank2Square(FILES.C_, RANKS._1)] === PIECES.EMPTY &&
+					this.board[FileRank2Square(FILES.D_, RANKS._1)] === PIECES.EMPTY &&
+					this.board[FileRank2Square(FILES.A_, RANKS._1)] ===
+						PIECES.whiteRook &&
+					!this.isSquareAttacked(sq, COLORS.BLACK) && // King not in check
+					!this.isSquareAttacked(
+						FileRank2Square(FILES.D_, RANKS._1),
+						COLORS.BLACK,
+					) && // King doesn't pass through attacked square
+					!this.isSquareAttacked(
+						FileRank2Square(FILES.C_, RANKS._1),
+						COLORS.BLACK,
+					) // King doesn't end in check
+				) {
+					squares.push([sq, FileRank2Square(FILES.C_, RANKS._1)]);
+				}
+			} else {
+				// Black kingside castling (O-O)
+				if (
+					this.castlingAvailability & CASTLEBITS.BKCA &&
+					this.board[FileRank2Square(FILES.F_, RANKS._8)] === PIECES.EMPTY &&
+					this.board[FileRank2Square(FILES.G_, RANKS._8)] === PIECES.EMPTY &&
+					this.board[FileRank2Square(FILES.H_, RANKS._8)] ===
+						PIECES.blackRook &&
+					!this.isSquareAttacked(sq, COLORS.WHITE) && // King not in check
+					!this.isSquareAttacked(
+						FileRank2Square(FILES.F_, RANKS._8),
+						COLORS.WHITE,
+					) && // King doesn't pass through attacked square
+					!this.isSquareAttacked(
+						FileRank2Square(FILES.G_, RANKS._8),
+						COLORS.WHITE,
+					) // King doesn't end in check
+				) {
+					squares.push([sq, FileRank2Square(FILES.G_, RANKS._8)]);
+				}
+
+				// Black queenside castling (O-O-O)
+				if (
+					this.castlingAvailability & CASTLEBITS.BQCA &&
+					this.board[FileRank2Square(FILES.B_, RANKS._8)] === PIECES.EMPTY &&
+					this.board[FileRank2Square(FILES.C_, RANKS._8)] === PIECES.EMPTY &&
+					this.board[FileRank2Square(FILES.D_, RANKS._8)] === PIECES.EMPTY &&
+					this.board[FileRank2Square(FILES.A_, RANKS._8)] ===
+						PIECES.blackRook &&
+					!this.isSquareAttacked(sq, COLORS.WHITE) && // King not in check
+					!this.isSquareAttacked(
+						FileRank2Square(FILES.D_, RANKS._8),
+						COLORS.WHITE,
+					) && // King doesn't pass through attacked square
+					!this.isSquareAttacked(
+						FileRank2Square(FILES.C_, RANKS._8),
+						COLORS.WHITE,
+					) // King doesn't end in check
+				) {
+					squares.push([sq, FileRank2Square(FILES.C_, RANKS._8)]);
+				}
+			}
+
+			return squares;
 		}
 
 		return [];

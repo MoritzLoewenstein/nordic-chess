@@ -272,21 +272,17 @@ input:focus {
 }
 
 .hint-from {
-	/* biome-ignore lint/complexity/noImportantStyles: override board defaults */
-	background-color: var(--accent-blue) !important;
-	/* biome-ignore lint/complexity/noImportantStyles: override board defaults */
-	border-color: var(--border) !important;
+	background-color: var(--accent-blue);
+	border-color: var(--border);
 	animation: hint-pulse 1s ease-in-out infinite;
-	box-shadow: 0 0 15px rgba(94, 129, 172, 0.8) !important;
+	box-shadow: 0 0 15px rgba(94, 129, 172, 0.8);
 }
 
 .hint-to {
-	/* biome-ignore lint/complexity/noImportantStyles: override board defaults */
-	background-color: var(--green) !important;
-	/* biome-ignore lint/complexity/noImportantStyles: override board defaults */
-	border-color: var(--border) !important;
+	background-color: var(--green);
+	border-color: var(--border);
 	animation: hint-pulse 1s ease-in-out infinite;
-	box-shadow: 0 0 15px rgba(163, 190, 140, 0.8) !important;
+	box-shadow: 0 0 15px rgba(163, 190, 140, 0.8);
 }
 
 @keyframes hint-pulse {
