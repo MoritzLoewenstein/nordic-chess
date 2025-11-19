@@ -11,12 +11,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const sourceDir = path.join(__dirname, "../node_modules/stockfish/src");
-const destDir = path.join(__dirname, "../dist/stockfish");
+const destDir = path.join(__dirname, "../public/stockfish");
 
-// Create destination directory if it doesn't exist
-if (!fs.existsSync(destDir)) {
-	fs.mkdirSync(destDir, { recursive: true });
-}
+fs.rmSync(destDir, { recursive: true, force: true });
+fs.mkdirSync(destDir, { recursive: true });
 
 // Files to copy: lite multi-threaded engine
 // Matches pattern: stockfish-17.1-lite-[hash].js and .wasm (not single-threaded)
@@ -26,11 +24,15 @@ try {
 	const files = fs.readdirSync(sourceDir);
 	let copiedCount = 0;
 
+	let stockfishWorker = null;
 	files.forEach((file) => {
 		if (liteLiteRegex.test(file)) {
 			const sourceFile = path.join(sourceDir, file);
 			const destFile = path.join(destDir, file);
 
+			if (path.extname(file) === ".js") {
+				stockfishWorker = file;
+			}
 			if (fs.statSync(sourceFile).isFile()) {
 				fs.copyFileSync(sourceFile, destFile);
 				console.log(`✓ Copied ${file}`);
@@ -45,6 +47,13 @@ try {
 	}
 
 	console.log(`\n✓ Stockfish lite multi-threaded engine copied to ${destDir}`);
+
+	if (stockfishWorker) {
+		fs.writeFileSync(
+			"js/stockfish_worker.js",
+			`export default '${stockfishWorker}';`,
+		);
+	}
 } catch (error) {
 	console.error("✗ Error copying Stockfish files:", error.message);
 	process.exit(1);

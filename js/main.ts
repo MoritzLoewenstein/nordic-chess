@@ -44,11 +44,6 @@ window.addEventListener("load", async () => {
 		infoExpand.classList.toggle("expanded");
 	});
 
-	const testBtn = document.getElementById("test") as HTMLElement;
-	testBtn.addEventListener("click", () => {
-		chess.color = oppositeColor(chess.color);
-	});
-
 	// Add engine hint button if available
 	const hintBtn = document.getElementById("hint");
 	if (hintBtn) {

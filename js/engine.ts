@@ -4,6 +4,8 @@
  * Runs in a Web Worker to avoid blocking the UI
  */
 
+import stockfish_worker from "./stockfish_worker.js";
+
 export interface BestMoveResponse {
 	move: string;
 	ponderMove?: string;
@@ -29,33 +31,13 @@ export class ChessEngine {
 
 	/**
 	 * Initialize the Stockfish engine in a Web Worker
-	 * @param workerPath - Path to stockfish worker file (auto-detected if not provided)
 	 */
-	async initialize(workerPath?: string): Promise<void> {
-		// Auto-detect the lite multi-threaded engine file if not provided
-		if (!workerPath) {
-			try {
-				const response = await fetch("/stockfish/");
-				if (!response.ok) {
-					throw new Error("Failed to load stockfish directory");
-				}
-
-				const html = await response.text();
-				// Find the lite multi-threaded .js file
-				const match = html.match(/href="(stockfish-17\.1-lite-[a-f0-9]+\.js)"/);
-				if (!match) {
-					throw new Error("Stockfish lite engine not found");
-				}
-				workerPath = `/stockfish/${match[1]}`;
-			} catch (error) {
-				console.error("Auto-detection failed:", error);
-				throw error;
-			}
-		}
-
+	async initialize(): Promise<void> {
+		console.log(stockfish_worker);
+		const WORKER_PATH = `/stockfish/${stockfish_worker}`;
 		return new Promise((resolve, reject) => {
 			try {
-				this.worker = new Worker(workerPath, {
+				this.worker = new Worker(WORKER_PATH, {
 					type: "module",
 				});
 

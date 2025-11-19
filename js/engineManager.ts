@@ -11,10 +11,9 @@ let initializationPromise: Promise<ChessEngine> | null = null;
 /**
  * Get or create the global engine instance
  * Lazy initialization - engine is only created when first requested
- * @param workerPath - Optional custom path to stockfish worker
  * @returns Promise resolving to the engine instance
  */
-export async function getEngine(workerPath?: string): Promise<ChessEngine> {
+export async function getEngine(): Promise<ChessEngine> {
 	// If already initialized, return immediately
 	if (engineInstance?.isReady()) {
 		return engineInstance;
@@ -29,9 +28,7 @@ export async function getEngine(workerPath?: string): Promise<ChessEngine> {
 	initializationPromise = (async () => {
 		try {
 			const engine = new ChessEngine();
-			await engine.initialize(
-				workerPath || "/stockfish/stockfish-nnue-17.1-lite.js",
-			);
+			await engine.initialize();
 			engineInstance = engine;
 			return engine;
 		} catch (error) {

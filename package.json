@@ -7,9 +7,9 @@
 	"directories": {},
 	"scripts": {
 		"dev": "vite",
-		"build": "vite build && npm run copy:stockfish",
-		"copy:stockfish": "node scripts/copy-stockfish.js",
+		"build": "vite build",
 		"preview": "vite preview",
+		"postinstall": "node scripts/copy-stockfish.js",
 		"typecheck": "tsc --noEmit",
 		"biome:check": "biome check .",
 		"biome:write": "biome check --write .",
