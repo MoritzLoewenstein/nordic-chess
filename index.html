@@ -9,7 +9,7 @@
       rel="stylesheet"
     />
     <link href="css/style.css" rel="stylesheet" type="text/css" />
-    <script src="js/bundle.js"></script>
+    <script type="module" src="js/main.ts"></script>
   </head>
   <body>
     <div id="controls">
@@ -18,24 +18,29 @@
       <button type="button" id="flip-board">Flip Board</button>
       <button type="button" id="new-game">New Game</button>
       <button type="button" id="info-expand">Info</button>
-      <button type="button" id="test">Test</button>
+      <button type="button" id="hint">Hint</button>
+      <button type="button" id="analyze">Analyze</button>
+    </div>
+    <div id="engine-info">
+      <span id="engine-status">Initializing...</span>
+      <span id="turn-indicator" class="white-turn">White to move</span>
     </div>
     <div id="error"></div>
     <div id="info">
       <p>1. Your active piece</p>
       <div
         id="info-active"
-        style="background-image: url('images/wB.svg');"
+        style="background-image: url('images/wB.svg')"
       ></div>
       <p>2. Your active piece can move here</p>
       <div id="info-possible"></div>
       <p>3. You can capture this piece with your active piece</p>
       <div
         id="info-capturable"
-        style="background-image: url('images/bB.svg');"
+        style="background-image: url('images/bB.svg')"
       ></div>
     </div>
-    <div id="board-columns">
+    <div id="board-columns-top">
       <div>a</div>
       <div>b</div>
       <div>c</div>
@@ -46,7 +51,7 @@
       <div>h</div>
     </div>
     <div id="board-container">
-      <div id="board-rows">
+      <div id="board-rows-left">
         <div>8</div>
         <div>7</div>
         <div>6</div>
@@ -129,7 +134,7 @@
         <div id="g1" class="dark square"></div>
         <div id="h1" class="light square"></div>
       </div>
-      <div id="board-rows">
+      <div id="board-rows-right">
         <div>8</div>
         <div>7</div>
         <div>6</div>
@@ -140,7 +145,7 @@
         <div>1</div>
       </div>
     </div>
-    <div id="board-columns">
+    <div id="board-columns-bottom">
       <div>a</div>
       <div>b</div>
       <div>c</div>
@@ -150,6 +155,9 @@
       <div>g</div>
       <div>h</div>
     </div>
-    <div id="probabilities"><div id="prob-white"></div></div>
+    <div id="probabilities">
+      <div id="eval-text">Eval: 0.00</div>
+      <div id="prob-white"></div>
+    </div>
   </body>
 </html>
