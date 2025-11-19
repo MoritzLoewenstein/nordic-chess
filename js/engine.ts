@@ -36,9 +36,7 @@ export class ChessEngine {
 		const WORKER_PATH = `/stockfish/${stockfish_worker}`;
 		return new Promise((resolve, reject) => {
 			try {
-				this.worker = new Worker(WORKER_PATH, {
-					type: "module",
-				});
+				this.worker = new Worker(WORKER_PATH);
 
 				this.worker.onmessage = (event: MessageEvent<string>) => {
 					const message = event.data as string;
