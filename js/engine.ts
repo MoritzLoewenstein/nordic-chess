@@ -33,7 +33,6 @@ export class ChessEngine {
 	 * Initialize the Stockfish engine in a Web Worker
 	 */
 	async initialize(): Promise<void> {
-		console.log(stockfish_worker);
 		const WORKER_PATH = `/stockfish/${stockfish_worker}`;
 		return new Promise((resolve, reject) => {
 			try {

@@ -21,7 +21,6 @@ window.addEventListener("load", async () => {
 	// Initialize engine
 	try {
 		engine = await getEngine();
-		console.log("✓ Engine initialized");
 		updateEngineStatus("Ready");
 	} catch (error) {
 		console.error("✗ Failed to initialize engine:", error);
@@ -102,8 +101,6 @@ function loadFen(loadDefault: boolean = false): void {
 				setPiece(`${FILES_CHAR[file]}${RANKS_CHAR[rank]}`, piecesStr[pieceNum]);
 		}
 	}
-	chess.printAttackedSquares();
-	chess.prettyPrint();
 	cleanActiveSquareEventListeners();
 }
 
