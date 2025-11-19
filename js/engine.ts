@@ -49,7 +49,7 @@ export class ChessEngine {
 				};
 
 				this.worker.onerror = (error: ErrorEvent) => {
-					console.error("Engine worker error:", error.message);
+					console.error("Engine worker error:", error);
 					reject(error);
 				};
 
