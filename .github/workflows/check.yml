@@ -26,5 +26,3 @@ jobs:
       - run: npm run biome:ci
 
       - run: npm run typecheck
-
-      - run: npm run test

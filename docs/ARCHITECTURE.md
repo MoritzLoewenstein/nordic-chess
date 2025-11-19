@@ -430,52 +430,6 @@ Cross-Origin-Opener-Policy: same-origin
 Cross-Origin-Embedder-Policy: require-corp
 ```
 
-#### Vite Configuration
-
-```typescript
-// vite.config.ts
-export default defineConfig({
-  server: {
-    headers: {
-      "Cross-Origin-Opener-Policy": "same-origin",
-      "Cross-Origin-Embedder-Policy": "require-corp",
-    },
-  },
-  optimizeDeps: {
-    exclude: ["stockfish"],
-  },
-});
-```
-
----
-
-## Development Guide
-
-### Testing
-
-Run tests from browser console:
-
-```javascript
-await testEngine();
-```
-
-Tests cover:
-
-- Engine initialization
-- Best move analysis
-- Position evaluation
-- ChessPosition integration
-- FEN export/import
-- Configuration options
-
-### Linting & Formatting
-
-```bash
-npm run biome:check    # Check code
-npm run biome:write    # Auto-format
-npm run biome:ci       # CI check
-```
-
 ## Known Limitations
 
 ### Completed Features
@@ -547,18 +501,6 @@ npm run biome:ci       # CI check
 - [ ] Save analysis to game
 
 ---
-
-## Testing
-
-### Unit Tests
-
-Located in `js/engine-test.ts` and `js/test.ts`
-
-Run from browser console:
-
-```javascript
-await testEngine();
-```
 
 ## Troubleshooting
 
